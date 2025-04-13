@@ -20,6 +20,7 @@ import ApproveApplications from "./pages/admin/ApproveApplications";
 import PaymentsTracker from "./pages/admin/PaymentsTracker";
 import ManageTimetable from "./pages/admin/ManageTimetable";
 import ManageResults from "./pages/admin/ManageResults";
+import ManageAccounts from "./pages/admin/ManageAccounts"; // Add the new page
 import NotFound from "./pages/NotFound";
 
 // Context
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="/admin/payments" element={<PaymentsTracker />} />
               <Route path="/admin/manage-timetable" element={<ManageTimetable />} />
               <Route path="/admin/manage-results" element={<ManageResults />} />
+              <Route path="/admin/manage-accounts" element={<ManageAccounts />} /> {/* Add new route */}
               
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />

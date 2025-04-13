@@ -24,6 +24,11 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   session: Session | null;
+  createUser: (name: string, email: string, password: string, isAdmin: boolean, studentDetails?: {
+    studentId?: string;
+    program?: string;
+    level?: string;
+  }) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -117,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
             setLoading(false);
           })
-          .catch(error => {
+          .catch((error) => {
             console.error('Error in profile fetch:', error);
             setLoading(false);
           });
@@ -182,6 +187,77 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Function for admins to create new accounts
+  const createUser = async (
+    name: string, 
+    email: string, 
+    password: string, 
+    isAdmin: boolean, 
+    studentDetails?: {
+      studentId?: string;
+      program?: string;
+      level?: string;
+    }
+  ): Promise<{ success: boolean; message: string }> => {
+    if (!user?.isAdmin) {
+      return { success: false, message: 'Only administrators can create accounts' };
+    }
+
+    try {
+      // Create user account in authentication
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true, // Auto-confirm email 
+        user_metadata: {
+          name,
+          is_admin: isAdmin,
+          student_id: studentDetails?.studentId || null,
+        }
+      });
+
+      if (authError) {
+        throw new Error(authError.message);
+      }
+
+      if (!authData.user) {
+        throw new Error('Failed to create user account');
+      }
+
+      // Create profile in profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          name: name,
+          email: email,
+          is_admin: isAdmin,
+          student_id: studentDetails?.studentId || null,
+          program: studentDetails?.program || null,
+          level: studentDetails?.level || null,
+        });
+
+      if (profileError) {
+        // If profile creation fails, try to clean up the auth user
+        await supabase.auth.admin.deleteUser(authData.user.id);
+        throw new Error(`Failed to create user profile: ${profileError.message}`);
+      }
+
+      const userType = isAdmin ? 'admin' : 'student';
+      return { 
+        success: true, 
+        message: `Successfully created ${userType} account for ${email}`
+      };
+
+    } catch (error) {
+      console.error('Account creation error:', error);
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'An unknown error occurred'
+      };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -192,6 +268,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         isAuthenticated: !!user,
         isAdmin: user?.isAdmin || false,
+        createUser,
       }}
     >
       {children}
