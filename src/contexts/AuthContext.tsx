@@ -136,6 +136,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setLoading(false);
       }
+    }).catch(error => {
+      console.error('Error getting session:', error);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -169,6 +172,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: 'Login failed',
         description: error instanceof Error ? error.message : 'An unknown error occurred',
       });
+      throw error; // Re-throw the error so it can be caught by the calling function
     } finally {
       setLoading(false);
     }
