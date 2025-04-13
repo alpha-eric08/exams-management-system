@@ -2,24 +2,27 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
 
-interface User {
+interface UserProfile {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   role: 'student' | 'admin';
-  studentId?: string;
-  program?: string;
-  level?: string;
+  studentId?: string | null;
+  program?: string | null;
+  level?: string | null;
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: UserProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  session: Session | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,71 +36,112 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Mock database of users
-  const mockUsers = [
-    {
-      id: '1',
-      name: 'John Student',
-      email: 'student@example.com',
-      password: 'password',
-      role: 'student' as const,
-      studentId: '10012345',
-      program: 'Bachelor of Computer Science',
-      level: '300',
-    },
-    {
-      id: '2',
-      name: 'Admin User',
-      email: 'admin@example.com',
-      password: 'password',
-      role: 'admin' as const,
-    },
-  ];
-
   useEffect(() => {
-    // Check if user is stored in localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        
+        if (session?.user) {
+          // Fetch additional user profile data
+          setTimeout(async () => {
+            try {
+              const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+              if (error) {
+                console.error('Error fetching profile:', error);
+                return;
+              }
+
+              if (profile) {
+                setUser({
+                  id: session.user.id,
+                  name: profile.name,
+                  email: session.user.email,
+                  role: profile.is_admin ? 'admin' : 'student',
+                  studentId: profile.student_id,
+                  program: profile.program,
+                  level: profile.level,
+                });
+              }
+            } catch (error) {
+              console.error('Error processing user profile:', error);
+            }
+          }, 0);
+        } else {
+          setUser(null);
+        }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      
+      if (session?.user) {
+        // Fetch user profile
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
+          .then(({ data: profile, error }) => {
+            if (error) {
+              console.error('Error fetching profile:', error);
+              return;
+            }
+
+            if (profile) {
+              setUser({
+                id: session.user.id,
+                name: profile.name,
+                email: session.user.email,
+                role: profile.is_admin ? 'admin' : 'student',
+                studentId: profile.student_id,
+                program: profile.program,
+                level: profile.level,
+              });
+            }
+          })
+          .finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-      const foundUser = mockUsers.find(user => user.email === email && user.password === password);
-      
-      if (!foundUser) {
-        throw new Error('Invalid email or password');
+      if (error) {
+        throw new Error(error.message);
       }
 
-      // Remove password from user object
-      const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      
-      // Save to localStorage
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+      // User profile fetching is handled by the auth state change listener
       
       toast({
         title: 'Login successful',
-        description: `Welcome back, ${foundUser.name}`,
+        description: 'Welcome back!',
       });
 
-      // Redirect based on role
-      if (foundUser.role === 'admin') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/student/dashboard');
-      }
+      // Navigation happens in the auth state listener
 
     } catch (error) {
       console.error('Login error:', error);
@@ -106,25 +150,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: 'Login failed',
         description: error instanceof Error ? error.message : 'An unknown error occurred',
       });
-    } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-    navigate('/login');
-    toast({
-      title: 'Logged out',
-      description: 'You have been successfully logged out',
-    });
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      navigate('/login');
+      toast({
+        title: 'Logged out',
+        description: 'You have been successfully logged out',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Logout failed',
+        description: 'Failed to log out. Please try again.',
+      });
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        session,
         loading,
         login,
         logout,
