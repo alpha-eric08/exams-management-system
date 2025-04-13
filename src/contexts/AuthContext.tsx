@@ -80,6 +80,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                   isAdmin: profile.is_admin // Set isAdmin directly
                 });
               }
+
+              // Handle navigation based on user role
+              if (profile?.is_admin) {
+                navigate('/admin/dashboard');
+              } else {
+                navigate('/student/dashboard');
+              }
             } catch (error) {
               console.error('Error processing user profile:', error);
             }
@@ -132,7 +139,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const login = async (email: string, password: string) => {
     setLoading(true);

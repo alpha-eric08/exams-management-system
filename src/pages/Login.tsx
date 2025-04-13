@@ -6,26 +6,41 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError('');
     
     try {
       await login(email, password);
       // Navigation is handled in AuthContext
     } catch (error) {
       console.error('Login error:', error);
+      setError(error instanceof Error ? error.message : 'Invalid credentials. Please try again.');
       // Toast notification is handled in AuthContext
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const setTestCredentials = (type: 'admin' | 'student') => {
+    if (type === 'admin') {
+      setEmail('admin@example.com');
+      setPassword('password');
+    } else {
+      setEmail('student@example.com');
+      setPassword('password');
     }
   };
 
@@ -45,6 +60,13 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <ExclamationTriangleIcon className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -97,16 +119,24 @@ const Login = () => {
                 Test accounts:
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-gray-100 p-2 rounded">
-                  <p><strong>Student:</strong></p>
-                  <p>student@example.com</p>
-                  <p>password</p>
-                </div>
-                <div className="bg-gray-100 p-2 rounded">
+                <Button 
+                  variant="outline"
+                  onClick={() => setTestCredentials('admin')}
+                  className="bg-gray-100 h-auto py-2 flex flex-col"
+                >
                   <p><strong>Admin:</strong></p>
                   <p>admin@example.com</p>
                   <p>password</p>
-                </div>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setTestCredentials('student')}
+                  className="bg-gray-100 h-auto py-2 flex flex-col"
+                >
+                  <p><strong>Student:</strong></p>
+                  <p>student@example.com</p>
+                  <p>password</p>
+                </Button>
               </div>
             </div>
           </CardFooter>
