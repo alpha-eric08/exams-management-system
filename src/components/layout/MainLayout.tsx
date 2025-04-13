@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Sidebar from './Sidebar';
+import MobileNavbar from './MobileNavbar';
 import { LogOut, User } from 'lucide-react';
 
 interface MainLayoutProps {
@@ -18,6 +19,11 @@ const MainLayout = ({ children, title }: MainLayoutProps) => {
       <Sidebar />
       
       <div className="flex flex-col flex-grow">
+        {/* Mobile Navigation */}
+        <div className="md:hidden">
+          <MobileNavbar />
+        </div>
+        
         {/* Header */}
         <header className="bg-maroon text-white shadow-md">
           <div className="container mx-auto px-4 py-4 flex justify-between items-center">
