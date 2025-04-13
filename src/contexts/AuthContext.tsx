@@ -13,6 +13,7 @@ interface UserProfile {
   studentId?: string | null;
   program?: string | null;
   level?: string | null;
+  isAdmin: boolean; // Add explicit isAdmin property
 }
 
 interface AuthContextType {
@@ -71,6 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                   studentId: profile.student_id,
                   program: profile.program,
                   level: profile.level,
+                  isAdmin: profile.is_admin // Set isAdmin directly
                 });
               }
             } catch (error) {
@@ -97,6 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .then(({ data: profile, error }) => {
             if (error) {
               console.error('Error fetching profile:', error);
+              setLoading(false);
               return;
             }
 
@@ -109,10 +112,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 studentId: profile.student_id,
                 program: profile.program,
                 level: profile.level,
+                isAdmin: profile.is_admin // Set isAdmin directly
               });
             }
+            setLoading(false);
           })
-          .finally(() => setLoading(false));
+          .catch(error => {
+            console.error('Error in profile fetch:', error);
+            setLoading(false);
+          });
       } else {
         setLoading(false);
       }
@@ -183,7 +191,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         isAuthenticated: !!user,
-        isAdmin: user?.role === 'admin',
+        isAdmin: user?.isAdmin || false,
       }}
     >
       {children}
