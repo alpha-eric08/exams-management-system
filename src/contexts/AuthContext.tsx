@@ -155,7 +155,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       // Navigation happens in the auth state listener
-
     } catch (error) {
       console.error('Login error:', error);
       toast({
@@ -163,6 +162,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: 'Login failed',
         description: error instanceof Error ? error.message : 'An unknown error occurred',
       });
+    } finally {
       setLoading(false);
     }
   };
