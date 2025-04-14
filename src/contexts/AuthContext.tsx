@@ -97,50 +97,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      
-      if (session?.user) {
-        // Fetch user profile
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-          .then(({ data: profile, error }) => {
-            if (error) {
-              console.error('Error fetching profile:', error);
-              setLoading(false);
-              return;
-            }
+    // Check for existing session - Fix the promise chain to properly handle errors
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        
+        if (session?.user) {
+          // Fetch user profile
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (error) {
+            console.error('Error fetching profile:', error);
+            setLoading(false);
+            return;
+          }
 
-            if (profile) {
-              setUser({
-                id: session.user.id,
-                name: profile.name,
-                email: session.user.email,
-                role: profile.is_admin ? 'admin' : 'student',
-                studentId: profile.student_id,
-                program: profile.program,
-                level: profile.level,
-                isAdmin: profile.is_admin // Set isAdmin directly
-              });
-            }
-            setLoading(false);
-          })
-          .catch((error) => {
-            console.error('Error in profile fetch:', error);
-            setLoading(false);
-          });
-      } else {
+          if (profile) {
+            setUser({
+              id: session.user.id,
+              name: profile.name,
+              email: session.user.email,
+              role: profile.is_admin ? 'admin' : 'student',
+              studentId: profile.student_id,
+              program: profile.program,
+              level: profile.level,
+              isAdmin: profile.is_admin // Set isAdmin directly
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error getting session:', error);
+      } finally {
         setLoading(false);
       }
-    }).catch(error => {
-      console.error('Error getting session:', error);
-      setLoading(false);
-    });
-
+    };
+    
+    checkSession();
+    
     return () => subscription.unsubscribe();
   }, [navigate]);
 
@@ -148,15 +146,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
 
     try {
+      console.log('Attempting login with:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (error) {
+        console.error('Login error details:', error);
         throw new Error(error.message);
       }
 
+      console.log('Login successful:', data);
       // User profile fetching is handled by the auth state change listener
       
       toast({

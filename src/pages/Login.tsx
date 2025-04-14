@@ -24,12 +24,12 @@ const Login = () => {
     setError('');
     
     try {
+      console.log('Login form submitted with:', email, 'and password length:', password.length);
       await login(email, password);
       // Navigation is handled in AuthContext
     } catch (error) {
       console.error('Login error:', error);
       setError(error instanceof Error ? error.message : 'Invalid credentials. Please try again.');
-      // Toast notification is handled in AuthContext
     } finally {
       setIsSubmitting(false);
     }
@@ -43,6 +43,8 @@ const Login = () => {
       setEmail('student@example.com');
       setPassword('password');
     }
+    // Clear any previous errors when setting test credentials
+    setError('');
   };
 
   return (
