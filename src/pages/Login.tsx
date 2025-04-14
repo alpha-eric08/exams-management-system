@@ -7,8 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-// Replace @radix-ui/react-icons with lucide-react which is available in the project
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, InfoIcon } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -69,6 +68,15 @@ const Login = () => {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+            
+            <Alert className="mb-4 bg-blue-50 border-blue-200">
+              <InfoIcon className="h-4 w-4 text-blue-500" />
+              <AlertDescription>
+                <p className="text-sm">
+                  The test accounts need to be created in Supabase first. Please sign up with these email addresses in your Supabase Auth dashboard or use the registration functionality if available.
+                </p>
+              </AlertDescription>
+            </Alert>
             
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
