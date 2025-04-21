@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import MainLayout from '@/components/layout/MainLayout';
-import MobileNavbar from '@/components/layout/MobileNavbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -51,7 +50,6 @@ const StudentDashboard = () => {
 
   return (
     <>
-      <MobileNavbar />
       <MainLayout title="Student Dashboard">
         {/* Welcome Section */}
         <section className="mb-8">

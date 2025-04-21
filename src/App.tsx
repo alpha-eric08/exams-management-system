@@ -26,6 +26,9 @@ import NotFound from "./pages/NotFound";
 // Context
 import { AuthProvider } from "./contexts/AuthContext";
 import { DataProvider } from "./contexts/DataContext";
+import ManageStudents from "./pages/admin/ManageStudents";
+import ManageLecturers from "./pages/admin/ManageLecturers";
+// import SignupForm from "./pages/Signup";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +43,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
+              {/* <Route path="/signup" element={<SignupForm />} /> */}
               
               {/* Student Routes */}
               <Route path="/student/dashboard" element={<StudentDashboard />} />
@@ -56,7 +60,9 @@ const App = () => (
               <Route path="/admin/payments" element={<PaymentsTracker />} />
               <Route path="/admin/manage-timetable" element={<ManageTimetable />} />
               <Route path="/admin/manage-results" element={<ManageResults />} />
-              <Route path="/admin/manage-accounts" element={<ManageAccounts />} /> {/* Add new route */}
+              <Route path="/admin/manage-accounts" element={<ManageAccounts />} /> 
+              <Route path="/admin/manage-students" element={<ManageStudents />} /> 
+              <Route path="/admin/manage-lecturers" element={<ManageLecturers />} /> 
               
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />

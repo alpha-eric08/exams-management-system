@@ -99,7 +99,7 @@ const Index = () => {
         <div className="container mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-gold text-center mb-12">How It Works</h2>
           
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto md:flex justify-between">
             {/* Resit Process */}
             <div className="mb-12">
               <h3 className="text-xl font-semibold mb-4">Resit Process</h3>

@@ -16,7 +16,9 @@ import {
   Clock,
   BookOpen,
   XCircle,
-  BarChart3
+  BarChart3,
+  UserPlus,
+  Upload
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -165,6 +167,13 @@ const AdminDashboard = () => {
             >
               <FileText className="h-5 w-5 mr-2" />
               Manage Results
+            </Button>
+            <Button 
+              className="bg-maroon hover:bg-maroon-dark text-white h-auto py-3"
+              onClick={() => navigate('/admin/manage-accounts')}
+            >
+              <UserPlus className="h-5 w-5 mr-2" />
+              Manage Accounts
             </Button>
           </div>
         </section>

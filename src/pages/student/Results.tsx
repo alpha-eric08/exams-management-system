@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import MainLayout from '@/components/layout/MainLayout';
-import MobileNavbar from '@/components/layout/MobileNavbar';
 
 const Results = () => {
   const { user, isAuthenticated, isAdmin } = useAuth();
@@ -31,7 +30,6 @@ const Results = () => {
 
   return (
     <>
-      <MobileNavbar />
       <MainLayout title="Examination Results">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-maroon mb-2">Your Examination Results</h2>

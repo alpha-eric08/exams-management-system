@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import MainLayout from '@/components/layout/MainLayout';
-import MobileNavbar from '@/components/layout/MobileNavbar';
 import CourseCard from '@/components/ui/CourseCard';
 import FileUpload from '@/components/forms/FileUpload';
 import { Button } from '@/components/ui/button';
@@ -127,7 +126,6 @@ const SupplementaryApplication = () => {
 
   return (
     <>
-      <MobileNavbar />
       <MainLayout title="Supplementary Application">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-maroon mb-2">Supplementary Examination Application</h2>

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Menu, X } from 'lucide-react';
+import { Menu, User, User2, Users2, X } from 'lucide-react';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -36,6 +36,8 @@ const MobileNavbar = () => {
     { to: '/admin/payments', icon: <DollarSign className="w-5 h-5" />, label: 'Payments' },
     { to: '/admin/manage-timetable', icon: <Calendar className="w-5 h-5" />, label: 'Manage Timetable' },
     { to: '/admin/manage-results', icon: <FileText className="w-5 h-5" />, label: 'Manage Results' },
+    { to: '/admin/manage-students', icon: <Users2 className="w-5 h-5" />, label: 'Manage Students' },
+    { to: '/admin/manage-Lecturers', icon: <User2 className="w-5 h-5" />, label: 'Manage Lecturers' },
   ];
 
   const links = isAdmin ? adminLinks : studentLinks;

@@ -48,7 +48,7 @@ const MainLayout = ({ children, title }: MainLayoutProps) => {
         </header>
         
         {/* Main content */}
-        <main className="flex-grow px-4 py-8">
+        <main className="flex-grow py-8">
           <div className="container mx-auto">
             {children}
           </div>

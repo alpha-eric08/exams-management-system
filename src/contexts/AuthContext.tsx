@@ -1,9 +1,19 @@
-
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  createContext, useContext, useState, useEffect, ReactNode
+} from 'react';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser
+} from 'firebase/auth';
+import {
+  doc, getDoc, setDoc
+} from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
+import { auth, db } from '@/integrations/firebase.config';
 
 interface UserProfile {
   id: string;
@@ -13,7 +23,7 @@ interface UserProfile {
   studentId?: string | null;
   program?: string | null;
   level?: string | null;
-  isAdmin: boolean; // Add explicit isAdmin property
+  isAdmin: boolean;
 }
 
 interface AuthContextType {
@@ -23,12 +33,18 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  session: Session | null;
-  createUser: (name: string, email: string, password: string, isAdmin: boolean, studentDetails?: {
-    studentId?: string;
-    program?: string;
-    level?: string;
-  }) => Promise<{ success: boolean; message: string }>;
+  session: FirebaseUser | null;
+  createUser: (
+    name: string,
+    email: string,
+    password: string,
+    isAdmin: boolean,
+    studentDetails?: {
+      studentId?: string;
+      program?: string;
+      level?: string;
+    }
+  ) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,137 +59,52 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        
-        if (session?.user) {
-          // Fetch additional user profile data
-          setTimeout(async () => {
-            try {
-              const { data: profile, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setSession(firebaseUser);
 
-              if (error) {
-                console.error('Error fetching profile:', error);
-                return;
-              }
+      if (firebaseUser) {
+        const profileRef = doc(db, 'profiles', firebaseUser.uid);
+        const profileSnap = await getDoc(profileRef);
 
-              if (profile) {
-                setUser({
-                  id: session.user.id,
-                  name: profile.name,
-                  email: session.user.email,
-                  role: profile.is_admin ? 'admin' : 'student',
-                  studentId: profile.student_id,
-                  program: profile.program,
-                  level: profile.level,
-                  isAdmin: profile.is_admin // Set isAdmin directly
-                });
-              }
-
-              // Handle navigation based on user role
-              if (profile?.is_admin) {
-                navigate('/admin/dashboard');
-              } else {
-                navigate('/student/dashboard');
-              }
-            } catch (error) {
-              console.error('Error processing user profile:', error);
-            }
-          }, 0);
-        } else {
-          setUser(null);
+        if (profileSnap.exists()) {
+          const profile = profileSnap.data();
+          setUser({
+            id: firebaseUser.uid,
+            name: profile.name,
+            email: firebaseUser.email,
+            role: profile.isAdmin ? 'admin' : 'student',
+            studentId: profile.studentId || null,
+            program: profile.program || null,
+            level: profile.level || null,
+            isAdmin: profile.isAdmin
+          });
         }
+      } else {
+        setUser(null);
       }
-    );
 
-    // Check for existing session - Fix the promise chain to properly handle errors
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        
-        if (session?.user) {
-          // Fetch user profile
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-            
-          if (error) {
-            console.error('Error fetching profile:', error);
-            setLoading(false);
-            return;
-          }
+      setLoading(false);
+    });
 
-          if (profile) {
-            setUser({
-              id: session.user.id,
-              name: profile.name,
-              email: session.user.email,
-              role: profile.is_admin ? 'admin' : 'student',
-              studentId: profile.student_id,
-              program: profile.program,
-              level: profile.level,
-              isAdmin: profile.is_admin // Set isAdmin directly
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error getting session:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    checkSession();
-    
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    return () => unsubscribe();
+  }, []);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
-
     try {
-      console.log('Attempting login with:', email);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) {
-        console.error('Login error details:', error);
-        throw new Error(error.message);
-      }
-
-      console.log('Login successful:', data);
-      // User profile fetching is handled by the auth state change listener
-      
-      toast({
-        title: 'Login successful',
-        description: 'Welcome back!',
-      });
-
-      // Navigation happens in the auth state listener
-    } catch (error) {
-      console.error('Login error:', error);
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({ title: 'Login successful', description: 'Welcome back!' });
+    } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Login failed',
-        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        description: error.message
       });
-      throw error; // Re-throw the error so it can be caught by the calling function
     } finally {
       setLoading(false);
     }
@@ -181,30 +112,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      await signOut(auth);
       setUser(null);
       setSession(null);
       navigate('/login');
-      toast({
-        title: 'Logged out',
-        description: 'You have been successfully logged out',
-      });
+      toast({ title: 'Logged out', description: 'You have been successfully logged out' });
     } catch (error) {
-      console.error('Logout error:', error);
       toast({
         variant: 'destructive',
         title: 'Logout failed',
-        description: 'Failed to log out. Please try again.',
+        description: 'Failed to log out. Please try again.'
       });
     }
   };
 
-  // Function for admins to create new accounts
   const createUser = async (
-    name: string, 
-    email: string, 
-    password: string, 
-    isAdmin: boolean, 
+    name: string,
+    email: string,
+    password: string,
+    isAdmin: boolean,
     studentDetails?: {
       studentId?: string;
       program?: string;
@@ -216,56 +142,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      // Create user account in authentication
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const newUser = userCredential.user;
+
+      await setDoc(doc(db, 'profiles', newUser.uid), {
+        name,
         email,
-        password,
-        email_confirm: true, // Auto-confirm email 
-        user_metadata: {
-          name,
-          is_admin: isAdmin,
-          student_id: studentDetails?.studentId || null,
-        }
+        isAdmin,
+        studentId: studentDetails?.studentId || null,
+        program: studentDetails?.program || null,
+        level: studentDetails?.level || null
       });
 
-      if (authError) {
-        throw new Error(authError.message);
-      }
-
-      if (!authData.user) {
-        throw new Error('Failed to create user account');
-      }
-
-      // Create profile in profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: authData.user.id,
-          name: name,
-          email: email,
-          is_admin: isAdmin,
-          student_id: studentDetails?.studentId || null,
-          program: studentDetails?.program || null,
-          level: studentDetails?.level || null,
-        });
-
-      if (profileError) {
-        // If profile creation fails, try to clean up the auth user
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        throw new Error(`Failed to create user profile: ${profileError.message}`);
-      }
-
-      const userType = isAdmin ? 'admin' : 'student';
-      return { 
-        success: true, 
-        message: `Successfully created ${userType} account for ${email}`
+      return {
+        success: true,
+        message: `Successfully created ${isAdmin ? 'admin' : 'student'} account for ${email}`
       };
-
-    } catch (error) {
+    } catch (error: any) {
       console.error('Account creation error:', error);
-      return { 
-        success: false, 
-        message: error instanceof Error ? error.message : 'An unknown error occurred'
+      return {
+        success: false,
+        message: error.message || 'An unknown error occurred'
       };
     }
   };
@@ -280,10 +177,251 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         isAuthenticated: !!user,
         isAdmin: user?.isAdmin || false,
-        createUser,
+        createUser
       }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
+
+
+// import {
+//   createContext, useContext, useState, useEffect, ReactNode
+// } from 'react';
+// import {
+//   createUserWithEmailAndPassword,
+//   signInWithEmailAndPassword,
+//   signOut,
+//   onAuthStateChanged,
+//   User as FirebaseUser
+// } from 'firebase/auth';
+// import {
+//   doc, getDoc, setDoc
+// } from 'firebase/firestore';
+// import { useNavigate } from 'react-router-dom';
+// import { toast } from '@/components/ui/use-toast';
+// import { auth, db } from '@/integrations/firebase.config';
+
+// interface UserProfile {
+//   id: string;
+//   name: string;
+//   email: string | null;
+//   role: 'student' | 'admin';
+//   studentId?: string | null;
+//   program?: string | null;
+//   level?: string | null;
+//   isAdmin: boolean;
+// }
+
+// interface AuthContextType {
+//   user: UserProfile | null;
+//   loading: boolean;
+//   login: (email: string, password: string) => Promise<void>;
+//   logout: () => Promise<void>;
+//   isAuthenticated: boolean;
+//   isAdmin: boolean;
+//   session: FirebaseUser | null;
+//   createUser: (
+//     name: string,
+//     email: string,
+//     password: string,
+//     isAdmin: boolean,
+//     studentDetails?: {
+//       studentId?: string;
+//       program?: string;
+//       level?: string;
+//     }
+//   ) => Promise<{ success: boolean; message: string }>;
+//   signup: (
+//     name: string,
+//     email: string,
+//     password: string,
+//     studentId: string,
+//     program: string,
+//     level: string
+//   ) => Promise<{ success: boolean; message: string }>;
+// }
+
+// const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// export const useAuth = () => {
+//   const context = useContext(AuthContext);
+//   if (!context) {
+//     throw new Error('useAuth must be used within an AuthProvider');
+//   }
+//   return context;
+// };
+
+// export const AuthProvider = ({ children }: { children: ReactNode }) => {
+//   const [user, setUser] = useState<UserProfile | null>(null);
+//   const [session, setSession] = useState<FirebaseUser | null>(null);
+//   const [loading, setLoading] = useState(true);
+//   const navigate = useNavigate();
+
+//   useEffect(() => {
+//     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+//       setSession(firebaseUser);
+
+//       if (firebaseUser) {
+//         const profileRef = doc(db, 'profiles', firebaseUser.uid);
+//         const profileSnap = await getDoc(profileRef);
+
+//         if (profileSnap.exists()) {
+//           const profile = profileSnap.data();
+//           setUser({
+//             id: firebaseUser.uid,
+//             name: profile.name,
+//             email: firebaseUser.email,
+//             role: profile.isAdmin ? 'admin' : 'student',
+//             studentId: profile.studentId || null,
+//             program: profile.program || null,
+//             level: profile.level || null,
+//             isAdmin: profile.isAdmin
+//           });
+//         }
+//       } else {
+//         setUser(null);
+//       }
+
+//       setLoading(false);
+//     });
+
+//     return () => unsubscribe();
+//   }, []);
+
+//   const login = async (email: string, password: string) => {
+//     setLoading(true);
+//     try {
+//       await signInWithEmailAndPassword(auth, email, password);
+//       toast({ title: 'Login successful', description: 'Welcome back!' });
+//     } catch (error: any) {
+//       toast({
+//         variant: 'destructive',
+//         title: 'Login failed',
+//         description: error.message
+//       });
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const logout = async () => {
+//     try {
+//       await signOut(auth);
+//       setUser(null);
+//       setSession(null);
+//       navigate('/login');
+//       toast({ title: 'Logged out', description: 'You have been successfully logged out' });
+//     } catch (error) {
+//       toast({
+//         variant: 'destructive',
+//         title: 'Logout failed',
+//         description: 'Failed to log out. Please try again.'
+//       });
+//     }
+//   };
+
+//   const createUser = async (
+//     name: string,
+//     email: string,
+//     password: string,
+//     isAdmin: boolean,
+//     studentDetails?: {
+//       studentId?: string;
+//       program?: string;
+//       level?: string;
+//     }
+//   ): Promise<{ success: boolean; message: string }> => {
+//     if (!user?.isAdmin) {
+//       return { success: false, message: 'Only administrators can create accounts' };
+//     }
+
+//     try {
+//       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+//       const newUser = userCredential.user;
+
+//       await setDoc(doc(db, 'profiles', newUser.uid), {
+//         name,
+//         email,
+//         isAdmin,
+//         studentId: studentDetails?.studentId || null,
+//         program: studentDetails?.program || null,
+//         level: studentDetails?.level || null
+//       });
+
+//       return {
+//         success: true,
+//         message: `Successfully created ${isAdmin ? 'admin' : 'student'} account for ${email}`
+//       };
+//     } catch (error: any) {
+//       console.error('Account creation error:', error);
+//       return {
+//         success: false,
+//         message: error.message || 'An unknown error occurred'
+//       };
+//     }
+//   };
+
+//   const signup = async (
+//     name: string,
+//     email: string,
+//     password: string,
+//     studentId: string,
+//     program: string,
+//     level: string
+//   ): Promise<{ success: boolean; message: string }> => {
+//     try {
+//       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+//       const newUser = userCredential.user;
+
+//       await setDoc(doc(db, 'profiles', newUser.uid), {
+//         name,
+//         email,
+//         isAdmin: false,
+//         studentId,
+//         program,
+//         level
+//       });
+
+//       toast({
+//         title: 'Account created',
+//         description: 'Your student account was created successfully!',
+//       });
+
+//       return {
+//         success: true,
+//         message: 'Student account created successfully'
+//       };
+//     } catch (error: any) {
+//       console.error('Signup error:', error);
+//       toast({
+//         variant: 'destructive',
+//         title: 'Signup failed',
+//         description: error.message || 'An unknown error occurred'
+//       });
+//       return {
+//         success: false,
+//         message: error.message || 'Signup failed'
+//       };
+//     }
+//   };
+
+//   return (
+//     <AuthContext.Provider
+//       value={{
+//         user,
+//         session,
+//         loading,
+//         login,
+//         logout,
+//         isAuthenticated: !!user,
+//         isAdmin: user?.isAdmin || false,
+//         createUser,
+//         signup
+//       }}
+//     >
+//       {children}
+//     </AuthContext.Provider>
+//   );
+// };
