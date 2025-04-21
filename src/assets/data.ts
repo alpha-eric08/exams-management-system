@@ -1,0 +1,51 @@
+import { alph, nana, ogidi, pgm } from '@/assets/images';
+
+export const teamMembers = [
+  {
+    name: 'Eric Owusu-Ansah',
+    role: 'Full-stack Developer / Team Lead',
+    image: alph,
+    bio: `I’m a passionate and detail-oriented Full-stack Developer with a strong focus on frontend technologies like React and Tailwind CSS. As Team Lead for this project, I managed task distribution, led UI/UX design, and handled frontend implementation. I also build mobile applications and integrate Firebase services such as authentication, real-time databases, and hosting. I love clean code, teamwork, and learning, and I’m committed to developing responsive, user-centric solutions that solve real-world problems efficiently.`,
+    github: 'https://github.com/alpha-eric08',
+    linkedin: 'https://www.linkedin.com/in/eric-owusu-ansah-0365682b3',
+    whatsapp: 'https://wa.me/233554139957',
+    email: 'mailto:owusuansaheric08@gmail.com',
+    index: '5221040605',
+  }, 
+  {
+    name: 'Fuseini Alimatu',
+    role: 'Team Secretary / Contributor',
+    image: '/images/dia.jpg', 
+    bio: "Dia is the heart of our group. As the Team Secretary, she played a key role in documenting meetings, ensuring proper communication among team members, and maintaining structured timelines. She contributed to planning, research, and supported both the UI and content development process. Alimatu’s commitment, attention to detail, and collaborative spirit helped the team stay focused and productive throughout the project.",
+    whatsapp: 'https://wa.me/233597374317', 
+    email: 'mailto:dia@example.com',
+    index: '5221040603',
+  },   
+  {
+    name: 'Nana Darko Sarpong',
+    role: 'Frontend Developer(Newbie)',
+    image: nana,
+    bio: `A student who loves football, music, and reading. I'm fun to be around and always up for new adventures`,
+    whatsapp: 'https://wa.me/233591923734',
+    email: 'mailto:sarpongnanadarko@gmail.com',
+    index: '5221040604',
+  },
+  {
+    name: 'Gyimah Antwi Yaw',
+    role: 'Team Member',
+    image: pgm,
+    bio: 'A 22 year nice guy who likes being good, an ambivert and a very sociable person. I love to be a helpful person to everyone but enjoys most of my time with bestfriends and families',
+    whatsapp: 'https://wa.me/233553052052',
+    // email: 'mailto:teammate@example.com',
+    index: '5221040602',
+  },
+  {
+    name: 'Gideon Korankye Prekoh',
+    role: 'Frontend Developer(Newbie)',
+    image: ogidi,
+    bio: `A 22-year-old student activist with a passion for creating positive change. By day, I'm an artist, and by night, I'm driven to make my mark on the world through politics. When I'm not advocating for social justice, I enjoy experimenting with code, particularly front-end development with HTML. I'm a dedicated advocate for social justice and I'm committed to using my voice and skills to bring people together.`,
+    whatsapp: 'https://wa.me/233247873604',
+    email: 'mailto:kurankyegideon@gmail.com',
+    index: '5221040607',
+  },
+];

@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import TeamSection from '@/components/Team';
 
 const Index = () => {
   const { isAuthenticated, isAdmin } = useAuth();
@@ -93,6 +94,8 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      <TeamSection />
       
       {/* How It Works Section */}
       <section className="bg-maroon-dark text-white py-16 px-4">
