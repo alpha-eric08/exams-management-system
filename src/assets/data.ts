@@ -1,4 +1,4 @@
-import { alph, nana, ogidi, pgm } from '@/assets/images';
+import { alph, dia, nana, ogidi, pgm } from '@/assets/images';
 
 export const teamMembers = [
   {
@@ -15,10 +15,9 @@ export const teamMembers = [
   {
     name: 'Fuseini Alimatu',
     role: 'Team Secretary / Contributor',
-    image: '/images/dia.jpg', 
+    image: dia, 
     bio: "Dia is the heart of our group. As the Team Secretary, she played a key role in documenting meetings, ensuring proper communication among team members, and maintaining structured timelines. She contributed to planning, research, and supported both the UI and content development process. Alimatu’s commitment, attention to detail, and collaborative spirit helped the team stay focused and productive throughout the project.",
     whatsapp: 'https://wa.me/233597374317', 
-    email: 'mailto:dia@example.com',
     index: '5221040603',
   },   
   {
@@ -36,7 +35,6 @@ export const teamMembers = [
     image: pgm,
     bio: 'A 22 year nice guy who likes being good, an ambivert and a very sociable person. I love to be a helpful person to everyone but enjoys most of my time with bestfriends and families',
     whatsapp: 'https://wa.me/233553052052',
-    // email: 'mailto:teammate@example.com',
     index: '5221040602',
   },
   {
