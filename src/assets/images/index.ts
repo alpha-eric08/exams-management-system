@@ -3,7 +3,7 @@ import pgm from "./pgm.jpg";
 import nana from "./nana.jpg";
 import ogidi from "./ogidi.jpg";
 import dia from "./dia.jpg";
-
+import ernest from "./ernerst.jpg";
 
 
 export{
@@ -11,5 +11,6 @@ export{
     pgm,
     nana,
     ogidi,
-    dia
+    dia,
+    ernest
 }

@@ -990,9 +990,6 @@ const ApproveApplications = () => {
     </div>
     </MainLayout>
     </>
-
-
-    
   );
 };
 

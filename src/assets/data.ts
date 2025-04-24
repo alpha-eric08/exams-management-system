@@ -1,4 +1,4 @@
-import { alph, dia, nana, ogidi, pgm } from '@/assets/images';
+import { alph, dia, ernest, nana, ogidi, pgm } from '@/assets/images';
 
 export const teamMembers = [
   {
@@ -46,4 +46,15 @@ export const teamMembers = [
     email: 'mailto:kurankyegideon@gmail.com',
     index: '5221040607',
   },
+  {
+    name: 'Oppong Ernest',
+    role: 'Video Editor',
+    image: ernest,
+    bio:` I am a versatile Video Editor with expertise in video editing and a graphic designer as well, dedicated to building responsive, user-centric interfaces through clean code and collaborative teamwork.`,
+    GitHub: "https://github.com/oppernest1",
+    linkedin: 'https://www.linkedin.com/in/opernest@icloud.com',
+    whatsapp: 'https://wa.me/233249382595',
+    email: 'mailto:oppernest1@gmail.com',
+    index: '5221040609',
+  },
 ];
